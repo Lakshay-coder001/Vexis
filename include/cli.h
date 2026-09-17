@@ -17,4 +17,6 @@ void vexis_cli_print_help(void);
 
 void vexis_cli_print_version(void);
 
+vexis_err_t vexis_cli_parse(int argc, char *argv[]);
+
 #endif

@@ -1,8 +1,10 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include "cli.c"
+#include "../include/vex_error.h"
+#include "../include/config.h"
 
-const char *print_vexis_err(const char* prg_name, vexis_err_t err){
+
+const char *print_vexis_err( vexis_err_t err){
     switch(err){
         case VEXIS_SUCC:
             return "SUCCESS";

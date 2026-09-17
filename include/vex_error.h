@@ -12,6 +12,6 @@ typedef enum{
     VEXIS_ERR_UNK = 6
 } vexis_err_t;
 
-const char *print_vexis_err(const char* prg_name,vexis_err_t err);
+const char *print_vexis_err(vexis_err_t err);
 
 #endif
