@@ -21,6 +21,9 @@
 //     printf("vexis 1.0.0\n");
 // }
 
+
+
+
 int main(int argc, char* argv[]){
     if(argc < 2){
         printf("Output: Error occured: No action specified. Try again!\n");
@@ -34,6 +37,16 @@ int main(int argc, char* argv[]){
     }
 
     if(argc == 2 && (strcmp(argv[1],"-v") == 0 || strcmp(argv[1],"--version") == 0)){
+        vexis_cli_print_version();
+        return 0;
+    }
+
+    if(argc == 3 && (strcmp(argv[2],"-h") == 0 || strcmp(argv[2],"--help") == 0)){
+        vexis_cli_print_help();
+        return 0;
+    }
+
+    if(argc == 3 && (strcmp(argv[2],"-v") == 0 || strcmp(argv[2],"--version") == 0)){
         vexis_cli_print_version();
         return 0;
     }

@@ -1,7 +1,7 @@
-#include "include/options.h"
-#include "include/vex_error.h"
-#include "include/config.h"
-#include "include/cli.h"
+#include "../include/options.h"
+#include "../include/vex_error.h"
+#include "../include/config.h"
+#include "../include/cli.h"
 
 void vexis_cli_print_help(){
     printf("VEXIS - A Cryptographic Encryption Tool\n");
