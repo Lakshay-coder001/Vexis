@@ -12,11 +12,18 @@ typedef enum {
     VEXIS_CMD_VERSION
 } vexis_cmd_type;
 
+typedef struct{
+    vexis_cmd_type cmd;
+    char *input_path;
+    char *output_path;
+    // might add --force option
+} vexis_cli_options;
+
 
 void vexis_cli_print_help(void);
 
 void vexis_cli_print_version(void);
 
-vexis_err_t vexis_cli_parse(int argc, char *argv[]);
+vexis_err_t vexis_cli_parse(int argc, char *argv[], vexis_cli_options *options);
 
 #endif
