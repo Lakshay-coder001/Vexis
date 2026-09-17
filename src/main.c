@@ -12,6 +12,8 @@ int main(int argc, char* argv[]){
     if(err != VEXIS_SUCC){
         fprintf(stderr, "Vexis Error: %s\n",print_vexis_err(err));
         return err;
-    }
+    } //this will handle all the errors
+
+    
     return 0;
 }

@@ -1,3 +1,4 @@
+#include<stdio.h>
 #include<string.h>
 #include "../include/options.h"
 #include "../include/vex_error.h"
@@ -46,6 +47,21 @@ vexis_err_t vexis_cli_parse(int argc, char *argv[]){
             vexis_cli_print_version();
             return VEXIS_SUCC;
         }
+    }
+
+    if (argc != 3) {
+        return VEXIS_ERR_UNK;
+    }
+    if (strcmp(argv[1], "encrypt") != 0 && strcmp(argv[1], "decrypt") != 0){
+        return VEXIS_ERR_UNK;
+    }
+    //here handling the file opening case
+    FILE *input = fopen(argv[2], "rb");
+    if(input == NULL){
+        return VEXIS_ERR_IFILE;
+    }
+    if(fclose(input) != 0){
+        return VEXIS_ERR_IFILE;
     }
 
     return VEXIS_SUCC;
