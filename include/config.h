@@ -7,6 +7,7 @@
 #define VEXIS_VERSION_STRING "1.0.0"
 #define VEXIS_PROGRAM_NAME "vexis"
 #define VEXIS_EXT ".vxs"
+#define VEXIS_PWD_MAX 256
 
 
 #endif

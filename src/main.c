@@ -4,6 +4,54 @@
 
 #include "../include/cli.h"
 #include "../include/vex_error.h"
+#include "../include/config.h"
+#include "../include/password.h"
+#include "../include/output.h"
+
+static vexis_err_t vexis_run_encrypt(vexis_cli_options *options){
+    char password[VEXIS_PWD_MAX];
+    char *enc_path = NULL;
+    FILE *out = NULL;
+    vexis_err_t err;
+
+    if (options == NULL || options->input_path == NULL) {
+        return VEXIS_ERR_UNK;
+    }
+
+    err = vexis_password_prompt_confirm(password, sizeof(password));
+    if (err != VEXIS_SUCC) {
+        fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(err));
+        return err;
+    }
+
+    err = vexis_build_enc_output(options->input_path, &enc_path);
+    if (err != VEXIS_SUCC) {
+        vexis_password_wipe(password, sizeof(password));
+        fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(err));
+        return err;
+    }
+
+    out = fopen(enc_path, "wb");
+    if (out == NULL) {
+        vexis_password_wipe(password, sizeof(password));
+        fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(VEXIS_ERR_OFILE));
+        free(enc_path);
+        return VEXIS_ERR_OFILE;
+    }
+    if (fclose(out) != 0) {
+        vexis_password_wipe(password, sizeof(password));
+        fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(VEXIS_ERR_OFILE));
+        free(enc_path);
+        return VEXIS_ERR_OFILE;
+    }
+
+    printf("Encryption successful: %s\n", enc_path);
+
+    // here should store the password with the file mapped to it
+
+    free(enc_path);
+    return VEXIS_SUCC;
+}
 
 
 int main(int argc, char* argv[]){
@@ -21,13 +69,8 @@ int main(int argc, char* argv[]){
         case VEXIS_CMD_VERSION:
             return 0;
         case VEXIS_CMD_ENCRYPT:
-        // here need to do the encrypt logic with crypto and all
-        // if malloc fail for .vxs file then give VEXIS_ERR_GEN
-            printf("Encrypting..... %s\n", options.input_path);
-            return 0;
+            return vexis_run_encrypt(&options);
         case VEXIS_CMD_DECRYPT:
-        // same here need to write the decrypt logic
-            printf("Decrypting..... %s -> %s\n", options.input_path, options.output_path);
             return 0;
         default:
             fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(VEXIS_ERR_UNK));

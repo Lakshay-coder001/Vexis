@@ -51,7 +51,7 @@ vexis_err_t vexis_cli_parse(int argc, char *argv[], vexis_cli_options *options){
     }
 
     if (strcmp(argv[1], "encrypt") == 0){
-        if (argc != 3) {
+        if(argc != 3) {
             return VEXIS_ERR_UNK;
         }
         //here handling the file opening case
@@ -69,16 +69,16 @@ vexis_err_t vexis_cli_parse(int argc, char *argv[], vexis_cli_options *options){
 
     // decrypt is parsed here
     if (strcmp(argv[1], "decrypt") == 0){
-        if (argc != 5) {
+        if(argc != 5) {
             return VEXIS_ERR_UNK;
         }
-        if (strcmp(argv[3], "-o") != 0) {
+        if(strcmp(argv[3], "-o") != 0) {
             return VEXIS_ERR_UNK;
         }
-        if (argv[4] == NULL || argv[4][0] == '\0') {
+        if(argv[4] == NULL || argv[4][0] == '\0') {
             return VEXIS_ERR_UNK;
         }
-        if (strcmp(argv[2], argv[4]) == 0){ // case where in and out path same
+        if(strcmp(argv[2], argv[4]) == 0){ // case where in and out path same
             return VEXIS_ERR_UNK;
         }
         FILE *input = fopen(argv[2], "rb");
