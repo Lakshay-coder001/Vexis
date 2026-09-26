@@ -40,7 +40,7 @@ static void transform(vexis_sha256_ctx *ctx, const uint8_t *data) {
         m[i] = SIG1(m[i - 2]) + m[i - 7] + SIG0(m[i - 15]) + m[i - 16];
     }
 
-    // 
+    // loading the state in 8 variable states
     a = ctx->state[0];
     b = ctx->state[1];
     c = ctx->state[2];
