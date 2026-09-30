@@ -13,7 +13,7 @@
 
 void vexis_random_salt(unsigned char* salt , size_t len){
     size_t i;
-    #ifdef _WIN32
+    #ifdef _WIN32 //window compatibility
         HCRYPTPROV prov = 0;
         if(CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)){
             if(CryptGenRandom(prov,(DWORD)len, salt)){
@@ -24,8 +24,15 @@ void vexis_random_salt(unsigned char* salt , size_t len){
             return ;
         }
 
-    #else
-
+    #else //linux compatibility
+        File *f = fopen("/dev/urandom", "rb");
+        if(f != NULL){
+            if(fread(salt , 1, len , f) == len){
+                fclose(f);
+                return;
+            }
+            fclose(f);
+        }
     #endif
         srand((unsigned)time(NULL)^ (unsigned)clock());
         for(int i = 0 ; i<len ; i++){
