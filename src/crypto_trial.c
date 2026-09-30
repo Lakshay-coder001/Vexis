@@ -39,3 +39,14 @@ void vexis_random_salt(unsigned char* salt , size_t len){
             salt[i] = (unsigned char)(rand() & 0xFF);
         }
 }
+
+void vexis_verifier_compute(const char* password, size_t pwd_len, const  unsigned char* salt, unsigned char out[32]){
+    vexis_sha256_ctx ctx;
+    vexis_sha256_init(&ctx);
+    vexis_sha256_update(&ctx, (const uint8_t)* VEXIS_MAGIC, VEXIS_MAGIC_LEN);
+    vexis_sha256_update(&ctx, salt , 16);
+    vexis_sha256_update(&ctx , (const uint8_t)* password, pwd_len);
+
+    vexis_sha256_final(&ctx, out);
+    memset(&ctx, 0, sizeof(ctx));
+}
