@@ -51,6 +51,74 @@ void vexis_verifier_compute(const char* password, size_t pwd_len, const  unsigne
     memset(&ctx, 0, sizeof(ctx));
 }
 
+
+static void keystream_block(const unsigned char verifier[32], uint64_t counter,unsigned char ks[32]){
+    uint8_t cntr[8];
+    int i ;
+    vexis_sha256_ctx ctx;
+
+    for(i = 0 ; i<8 ; i++){
+        cntr[i] = (uint8_t)(counter >>(i*8)); //this is little endian conversion
+    }
+
+    vexis_sha256_init(&ctx);
+    vexis_sha256_update(&ctx, verifier, VEXIS_HASH_LEN);
+    vexis_sha256_update(&ctx, cntr, 8);
+    vexis_sha256_final(&ctx, ks);
+    memset(&ctx, 0, sizeof(ctx));
+}
+
+
+static vexis_err_t crypt_body(FILE *fin, FILE *fout,const unsigned char verifier[32]){
+    static const size_t chunk = 4096;
+    unsigned char *buf = malloc(chunk);
+    unsigned char ks[32];
+    uint64_t block = 0;
+    size_t key_pos = 0;
+    size_t n, i;
+
+    if(buf == NULL){
+        return VEXIS_ERR_GEN;
+    }
+
+    keystream_block(verifier, block , ks);
+
+    for(;;){
+        n = fread(buf , 1, chunk , fin);
+        if(n == 0){
+            if(ferror(fin)){
+                memset(ks, 0 ,sizeof(ks));
+                free(buf);
+                return VEXIS_ERR_IFILE;
+            }
+            break;
+        }
+        for(int i = 0 ; i<n  ; i++){
+            if(key_pos == 32){
+                key_pos = 0;
+                block++;
+                keystream_block(verifier, block , ks);
+            }
+            buf[i] ^= ks[key_pos];
+            key_pos++;
+        }
+
+        if(fwrite(buf , 1 , n , fout) != n){
+            memset(ks, 0, sizeof(ks));
+            free(buf);
+            return VEXIS_ERR_OFILE;
+        }
+
+        if(n<chunk && feof(fin)){
+            break;
+        }
+        memset(ks, 0, sizeof(ks));
+        free(buf);
+        return VEXIS_SUCC;
+    }
+}
+
+
 vexis_err_t vexis_encrypt_file(const char* in_path, const char* out_path, const char* password){
     FILE *fin = NULL;
     FILE *fout = NULL;
