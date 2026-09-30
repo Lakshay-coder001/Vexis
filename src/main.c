@@ -7,11 +7,11 @@
 #include "../include/config.h"
 #include "../include/password.h"
 #include "../include/output.h"
+#include "../include/crypto.h"
 
 static vexis_err_t vexis_run_encrypt(vexis_cli_options *options){
     char password[VEXIS_PWD_MAX];
     char *enc_path = NULL;
-    FILE *out = NULL;
     vexis_err_t err;
 
     if (options == NULL || options->input_path == NULL) {
@@ -31,25 +31,42 @@ static vexis_err_t vexis_run_encrypt(vexis_cli_options *options){
         return err;
     }
 
-    out = fopen(enc_path, "wb");
-    if (out == NULL) {
-        vexis_password_wipe(password, sizeof(password));
-        fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(VEXIS_ERR_OFILE));
+    err = vexis_encrypt_file(options->input_path, enc_path, password);
+    vexis_password_wipe(password, sizeof(password));
+    if (err != VEXIS_SUCC) {
+        fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(err));
         free(enc_path);
-        return VEXIS_ERR_OFILE;
-    }
-    if (fclose(out) != 0) {
-        vexis_password_wipe(password, sizeof(password));
-        fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(VEXIS_ERR_OFILE));
-        free(enc_path);
-        return VEXIS_ERR_OFILE;
+        return err;
     }
 
     printf("Encryption successful: %s\n", enc_path);
 
-    // here should store the password with the file mapped to it
-
     free(enc_path);
+    return VEXIS_SUCC;
+}
+
+static vexis_err_t vexis_run_decrypt(vexis_cli_options *options){
+    char password[VEXIS_PWD_MAX];
+    vexis_err_t err;
+
+    if (options == NULL || options->input_path == NULL || options->output_path == NULL) {
+        return VEXIS_ERR_UNK;
+    }
+
+    err = vexis_password_prompt("Enter password: ", password, sizeof(password));
+    if (err != VEXIS_SUCC) {
+        fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(err));
+        return err;
+    }
+
+    err = vexis_decrypt_file(options->input_path, options->output_path, password);
+    vexis_password_wipe(password, sizeof(password));
+    if (err != VEXIS_SUCC) {
+        fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(err));
+        return err;
+    }
+
+    printf("Decryption successful: %s\n", options->output_path);
     return VEXIS_SUCC;
 }
 
@@ -61,7 +78,7 @@ int main(int argc, char* argv[]){
     if(err != VEXIS_SUCC){
         fprintf(stderr, "Vexis Error: %s\n",print_vexis_err(err));
         return err;
-    } //this will handle all the errors
+    }
 
     switch (options.cmd) {
         case VEXIS_CMD_HELP:
@@ -71,7 +88,7 @@ int main(int argc, char* argv[]){
         case VEXIS_CMD_ENCRYPT:
             return vexis_run_encrypt(&options);
         case VEXIS_CMD_DECRYPT:
-            return 0;
+            return vexis_run_decrypt(&options);
         default:
             fprintf(stderr, "Vexis Error: %s\n", print_vexis_err(VEXIS_ERR_UNK));
             return VEXIS_ERR_UNK;
