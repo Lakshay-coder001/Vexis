@@ -50,3 +50,46 @@ void vexis_verifier_compute(const char* password, size_t pwd_len, const  unsigne
     vexis_sha256_final(&ctx, out);
     memset(&ctx, 0, sizeof(ctx));
 }
+
+vexis_err_t vexis_encrypt_file(const char* in_path, const char* out_path, const char* password){
+    FILE *fin = NULL;
+    FILE *fout = NULL;
+    unsigned char salt[VEXIS_SALT_LEN];
+    unsigned char verifier[VEXIS_HASH_LEN];
+    vexis_err_t err;
+
+    if (in_path == NULL || out_path == NULL || password == NULL) {
+        return VEXIS_ERR_GEN;
+    }
+    fin = fopen(in_path , "rb");
+    fout = fopen(out_path , "wb");
+    if(fin == NULL){
+        return VEXIS_ERR_IFILE;
+    }
+    if(fout == NULL){
+        fcolse(fin);
+        return VEXIS_ERR_OFILE;
+    }
+
+    vexis_random_salt(salt, sizeof(salt));
+
+    vexis_verifier_compute(password, strlen(password), salt, verifier);
+
+    //now to write magic salt and verifier in file header
+    if(fwrite(VEXIS_MAGIC , 1 ,VEXIS_MAGIC_LEN, fout) != VEXIS_MAGIC_LEN  || fwrite(salt, 1, sizeof(salt), fout) != sizeof(salt)   || fwrite(verifier , 1 , sizeof(verifier), fout) != sizeof(verifier)){
+        err = VEXIS_ERR_OFILE;
+        memset(salt, 0 , sizeof(salt));
+        memset(verifier , 0, sizeof(verifier));
+        if (fin != NULL) {
+        fclose(fin);
+        }
+        if (fout != NULL) {
+            if (fclose(fout) != 0 && err == VEXIS_SUCC) {
+                err = VEXIS_ERR_OFILE;
+            }
+        }
+        return err;
+    }
+
+    //now encrypt the body
+}
