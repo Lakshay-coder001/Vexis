@@ -161,3 +161,78 @@ vexis_err_t vexis_encrypt_file(const char* in_path, const char* out_path, const 
 
     //now encrypt the body
 }
+
+
+static int calc_equal(const unsigned char *a, const unsigned char *b, size_t len) {
+    unsigned char diff = 0;
+    size_t i;
+    for (i = 0; i < len; i++) {
+        diff |= (unsigned char)(a[i] ^ b[i]);
+    }
+    return diff == 0;
+}
+
+vexis_err_t vexis_decrypt_file(const char *in_path, const char *out_path,const char *password){
+    FILE *fin = NULL;
+    FILE *fout = NULL;
+    unsigned char magic[VEXIS_MAGIC_LEN];
+    unsigned char salt[VEXIS_SALT_LEN];
+    unsigned char stored[VEXIS_HASH_LEN];
+    unsigned char calc[VEXIS_HASH_LEN];
+    vexis_err_t err;
+
+    if(in_path == NULL || out_path == NULL || password == NULL){
+        return VEXIS_ERR_GEN;
+    }
+
+    fin = fopen(in_path, "rb");
+    if(fin == NULL){
+        err = VEXIS_ERR_IFILE;
+        return err;
+    }
+    
+    if(fread(magic, 1, VEXIS_MAGIC_LEN ,fin) != VEXIS_MAGIC_LEN || fread(salt, 1, VEXIS_SALT_LEN, fin) != VEXIS_SALT_LEN || fread(stored, 1, VEXIS_HASH_LEN , fin) != VEXIS_HASH_LEN){
+        fclose(fin);
+        err = VEXIS_ERR_CRYP;
+        return err;
+    }
+
+    if(memcpy(magic , VEXIS_MAGIC , VEXIS_MAGIC_LEN) != 0){
+        fclose(fin);
+        memset(salt, 0, sizeof(salt));
+        memset(stored, 0, sizeof(stored));
+        err = VEXIS_ERR_CRYP;
+        return err;
+    }
+
+    vexis_verifier_compute(password, strlen(password), salt, calc);
+
+    if(!calc_equal(calc, stored , sizeof(stored))){
+        fclose(fin);
+        memset(calc, 0, sizeof(calc));
+        memset(stored, 0, sizeof(stored));
+        memset(salt, 0, sizeof(salt));
+        return VEXIS_ERR_PWD;
+    }
+
+    fout = fopen(out_path , "wb");
+    if(fout == NULL){
+        fclose(fin);
+        memset(calc, 0, sizeof(calc));
+        memset(stored, 0, sizeof(stored));
+        memset(salt, 0, sizeof(salt));
+        return VEXIS_ERR_OFILE;
+    }
+
+    err = crypt_body(fin, fout , calc);
+    memset(calc, 0, sizeof(calc));
+    memset(stored, 0, sizeof(stored));
+    memset(salt, 0, sizeof(salt));
+
+    fclose(fin);
+    if(fclose(fout) != 0 && err == VEXIS_SUCC){
+        err = VEXIS_ERR_OFILE;
+    }
+    return err;
+    
+}
