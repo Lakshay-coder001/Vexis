@@ -1,8 +1,40 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <termios.h>
+#include <unistd.h>
+#endif
+
 #include "../include/password.h"
 #include "../include/config.h"
+
+static void set_stdin_echo(int enable) {
+#ifdef _WIN32
+    HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD mode;
+    if (GetConsoleMode(hStdin, &mode)) {
+        if (enable) {
+            mode |= ENABLE_ECHO_INPUT;
+        } else {
+            mode &= ~ENABLE_ECHO_INPUT;
+        }
+        SetConsoleMode(hStdin, mode);
+    }
+#else
+    struct termios tty;
+    if (tcgetattr(STDIN_FILENO, &tty) == 0) {
+        if (enable) {
+            tty.c_lflag |= ECHO;
+        } else {
+            tty.c_lflag &= ~ECHO;
+        }
+        tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+    }
+#endif
+}
 
 void vexis_password_wipe(char *buf, size_t len) {
     if (buf == NULL || len == 0) {
@@ -52,7 +84,12 @@ vexis_err_t vexis_password_prompt(const char *prompt, char *out, size_t out_size
         fflush(stderr);
     }
 
-    if (fgets(out, (int)out_size, stdin) == NULL) {
+    set_stdin_echo(0);
+    char *res = fgets(out, (int)out_size, stdin);
+    set_stdin_echo(1);
+    fprintf(stderr, "\n");
+
+    if (res == NULL) {
         out[0] = '\0';
         return VEXIS_ERR_PWD;
     }
