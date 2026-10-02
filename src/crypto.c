@@ -12,7 +12,6 @@
 #endif
 
 void vexis_random_salt(unsigned char* salt , size_t len){
-    size_t i;
     #ifdef _WIN32 //window compatibility
         HCRYPTPROV prov = 0;
         if(CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)){
@@ -34,7 +33,7 @@ void vexis_random_salt(unsigned char* salt , size_t len){
         }
     #endif
         srand((unsigned)time(NULL)^ (unsigned)clock());
-        for(int i = 0 ; i<len ; i++){
+        for(size_t i = 0 ; i < len ; i++){
             salt[i] = (unsigned char)(rand() & 0xFF);
         }
 }
@@ -74,7 +73,7 @@ static vexis_err_t crypt_body(FILE *fin, FILE *fout,const unsigned char verifier
     unsigned char ks[32];
     uint64_t block = 0;
     size_t key_pos = 0;
-    size_t n, i;
+    size_t n;
 
     if(buf == NULL){
         return VEXIS_ERR_GEN;
@@ -92,7 +91,7 @@ static vexis_err_t crypt_body(FILE *fin, FILE *fout,const unsigned char verifier
             }
             break;
         }
-        for(int i = 0 ; i<n  ; i++){
+        for(size_t i = 0 ; i < n ; i++){
             if(key_pos == 32){
                 key_pos = 0;
                 block++;
