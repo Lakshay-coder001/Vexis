@@ -1,3 +1,7 @@
 .vscode/
 *.exe
 vexis
+*.o
+*.vxs
+*.bin
+test
